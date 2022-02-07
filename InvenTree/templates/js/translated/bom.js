@@ -77,7 +77,7 @@ function exportBom(part_id, options={}) {
                 value: inventreeLoad('bom-export-format', 'csv'),
                 choices: exportFormatOptions(),
             },
-            cascading: {
+            cascade: {
                 label: '{% trans "Cascading" %}',
                 help_text: '{% trans "Download cascading / multi-level BOM" %}',
                 type: 'boolean',
@@ -118,7 +118,7 @@ function exportBom(part_id, options={}) {
         onSubmit: function(fields, opts) {
 
             // Extract values from the form
-            var field_names = ['format', 'cascading', 'levels', 'parameter_data', 'stock_data', 'manufacturer_data', 'supplier_data'];
+            var field_names = ['format', 'cascade', 'levels', 'parameter_data', 'stock_data', 'manufacturer_data', 'supplier_data'];
 
             var url = `/part/${part_id}/bom-download/?`;
 
@@ -319,7 +319,19 @@ function bomSubstitutesDialog(bom_item_id, substitutes, options={}) {
         rows += renderSubstituteRow(sub);
     });
 
+    var part_thumb = thumbnailImage(options.sub_part_detail.thumbnail || options.sub_part_detail.image);
+    var part_name = options.sub_part_detail.full_name;
+    var part_desc = options.sub_part_detail.description;
+
     var html = `
+    <div class='alert alert-block'>
+    <strong>{% trans "Base Part" %}</strong><hr>
+    ${part_thumb} ${part_name} - <em>${part_desc}</em>
+    </div>
+    `;
+    
+    // Add a table of individual rows
+    html += `
     <table class='table table-striped table-condensed' id='substitute-table'>
         <thead>
             <tr>
@@ -337,7 +349,7 @@ function bomSubstitutesDialog(bom_item_id, substitutes, options={}) {
 
     html += `
     <div class='alert alert-success alert-block'>
-        {% trans "Select and add a new variant item using the input below" %}
+        {% trans "Select and add a new substitute part using the input below" %}
     </div>
     `;
 
@@ -766,6 +778,11 @@ function loadBomTable(table, options={}) {
     // This function may be called recursively for multi-level BOMs
     function requestSubItems(bom_pk, part_pk) {
 
+        // TODO: 2022-02-03 Currently, multi-level BOMs are not actually displayed.
+
+        // Re-enable this function once multi-level display has been re-deployed
+        return;
+
         inventreeGet(
             options.bom_url,
             {
@@ -945,7 +962,9 @@ function loadBomTable(table, options={}) {
                 subs,
                 {
                     table: table,
+                    part: row.part,
                     sub_part: row.sub_part,
+                    sub_part_detail: row.sub_part_detail,
                 }
             );
         });
